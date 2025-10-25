@@ -7,7 +7,7 @@ export default function LegalPage() {
       <header className="max-w-6xl mx-auto flex justify-between items-center px-4 py-4 border-b border-slate-200">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-slate-900 rounded-2xl" />
-          <span className="font-semibold">LeadSpark</span>
+          <span className="font-semibold">LeadApp</span>
         </div>
       </header>
 
@@ -15,14 +15,14 @@ export default function LegalPage() {
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-8">
           <h1 className="text-3xl font-extrabold tracking-tight mb-8">
-            LeadSpark — Legal & Contact
+            LeadApp — Legal & Contact
           </h1>
 
           <div className="space-y-8">
             {/* Copyright */}
             <div>
               <p className="text-slate-600">
-                © 2025 LeadSpark — B2B leads, simplified.
+                © 2025 LeadApp — B2B leads, simplified.
               </p>
             </div>
 

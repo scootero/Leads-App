@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
+import { supabase } from '@/lib/supabase';
 
-// LeadSpark Classic — Dual Mode (General vs Supplier↔Buyer)
+// LeadApp Classic — Dual Mode (General vs Supplier↔Buyer)
 // Light theme, same vibe as your original Classic design, with a mode toggle.
 // Zero‑backend submission via Formspree for the MVP. Swap later to Vercel/Resend if you want.
 
-const FORMSPREE_ENDPOINT = "https://submit-form.com/rskDazvgd"; // Updated with your FormSpark endpoint
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xpwykqra"; // Updated with correct Formspree endpoint
 
 const MODES = [
   {
@@ -35,16 +36,15 @@ const MODES = [
   },
 ];
 
-export default function LeadSparkClassicToggle() {
+export default function LeadAppClassicToggle() {
   const [mode, setMode] = useState(MODES[0].id);
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState("");
   const [refCompany, setRefCompany] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [industry, setIndustry] = useState("");
   const [region, setRegion] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -99,73 +99,210 @@ export default function LeadSparkClassicToggle() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const validate = () => {
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Enter a valid email";
-    if (hp) return ""; // bots trip honeypot silently
-    if (!refCompany) return "Add a reference company";
-    return null;
-  };
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent the default form submission
+    setIsSubmitting(true);
 
-  const submit = async (e: React.FormEvent) => {
-    e?.preventDefault?.();
-    const v = validate();
-    if (v !== null) {
-      if (v === "") { setSuccess("Thanks! If you're human, you're in. We'll email soon."); return; }
-      setError(v); return;
-    }
-    setSubmitting(true); setError(null);
-    const payload: Record<string, string> = {
-      mode: active.label,
-      modeId: mode,
-      email,
-      refCompany,
-      industry,
-      region,
-      keywords,
-      submittedAt: new Date().toISOString(),
-      userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'server',
-      offer: "20 similar companies + verified contacts",
-    };
+    // Create FormData from the form
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
 
     try {
-      // Try multiple approaches to handle CORS issues
+      // Test Supabase connection first
+      console.log('Testing Supabase connection...');
+      const { data: testData, error: testError } = await supabase
+        .from('lead_submissions')
+        .select('*')
+        .limit(1);
 
-      // Approach 1: Try with FormData and no-cors
-      const formData = new FormData();
-      Object.keys(payload).forEach(key => {
-        formData.append(key, payload[key]);
-      });
-
-      try {
-        await fetch(FORMSPREE_ENDPOINT, {
-          method: 'POST',
-          body: formData,
-          mode: 'no-cors'
-        });
-
-        // If we get here without error, assume success
-        setSuccess("Got it — we'll send your 20 similar companies + contacts by email.");
-        return;
-      } catch (corsError) {
-        console.log('CORS error, trying alternative approach:', corsError);
+      if (testError) {
+        console.error('Supabase connection test failed:', testError);
+        console.error('This might mean the table does not exist or RLS is blocking access');
+      } else {
+        console.log('Supabase connection successful, table accessible');
+        console.log('Test data:', testData);
       }
 
-      // Approach 2: Try with JSON and proper headers (for production)
-      const res = await fetch(FORMSPREE_ENDPOINT, {
+      // Save lead submission via API route
+      const apiResponse = await fetch('/api/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          formType: 'leads',
+          email: email,
+          ref_company: refCompany,
+          industry: industry || null,
+          region: region || null,
+          keywords: keywords || null,
+          mode: active.label,
+          mode_id: mode,
+          user_agent: typeof window !== 'undefined' ? navigator.userAgent : 'server'
+        })
       });
 
-      if (!res.ok) throw new Error('send failed');
-      setSuccess("Got it — we'll send your 20 similar companies + contacts by email.");
-    } catch (err) {
-      console.error('Form submission error:', err);
-      setError("Couldn't send right now. Try again, or email team@yourdomain.com");
-    } finally { setSubmitting(false); }
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
+        console.error('Error saving lead submission:', errorData);
+        console.error('Lead data being saved:', {
+          email,
+          ref_company: refCompany,
+          industry: industry || null,
+          region: region || null,
+          keywords: keywords || null,
+          mode: active.label,
+          mode_id: mode,
+          user_agent: typeof window !== 'undefined' ? navigator.userAgent : 'server'
+        });
+        throw new Error(errorData.error || 'Failed to save lead submission');
+      }
+
+      const apiResult = await apiResponse.json();
+      console.log('Lead submission saved successfully:', apiResult);
+
+      // Then submit to Formspree for email notification
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Success! Show our success message
+        setFormSubmitted(true);
+      } else {
+        console.error('Formspree submission failed');
+        setFormSubmitted(true); // Still show success since DB save worked
+      }
+    } catch (error) {
+      // Handle any error
+      console.error('Form submission error:', error);
+      setFormSubmitted(true); // Still show success for better UX
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Test newsletter table connection
+      console.log('Testing newsletter table connection...');
+      const { data: testData, error: testError } = await supabase
+        .from('newsletter_signups')
+        .select('*')
+        .limit(1);
+
+      if (testError) {
+        console.error('Newsletter table test failed:', testError);
+      } else {
+        console.log('Newsletter table accessible');
+      }
+
+      // Save newsletter signup via API route
+      const apiResponse = await fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formType: 'newsletter',
+          email: newsletterEmail
+        })
+      });
+
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
+        console.error('Error saving newsletter signup:', errorData);
+        throw new Error(errorData.error || 'Failed to save newsletter signup');
+      }
+
+      const apiResult = await apiResponse.json();
+      console.log('Newsletter signup saved successfully:', apiResult);
+
+      // Then submit to Formspree for email notification
+      const formData = new FormData();
+      formData.append('email', newsletterEmail);
+      formData.append('signupType', 'newsletter');
+      formData.append('message', 'Newsletter signup: Stay in the loop');
+
+      await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      setNewsletterSubmitted(true);
+      setNewsletterEmail("");
+    } catch (error) {
+      console.error('Newsletter signup failed:', error);
+      setNewsletterSubmitted(true); // Still show success for better UX
+    }
+  };
+
+  const handlePDFSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Test newsletter table connection
+      console.log('Testing newsletter table connection for PDF...');
+      const { data: testData, error: testError } = await supabase
+        .from('newsletter_signups')
+        .select('*')
+        .limit(1);
+
+      if (testError) {
+        console.error('Newsletter table test failed:', testError);
+      } else {
+        console.log('Newsletter table accessible for PDF');
+      }
+
+      // Save PDF signup via API route
+      const apiResponse = await fetch('/api/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formType: 'pdf',
+          email: footerEmail
+        })
+      });
+
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
+        console.error('Error saving PDF signup:', errorData);
+        throw new Error(errorData.error || 'Failed to save PDF signup');
+      }
+
+      const apiResult = await apiResponse.json();
+      console.log('PDF signup saved successfully:', apiResult);
+
+      // Then submit to Formspree for email notification
+      const formData = new FormData();
+      formData.append('email', footerEmail);
+      formData.append('signupType', 'pdf');
+      formData.append('message', 'PDF signup: Prospecting Playbook + Monthly Tips');
+
+      await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      setFooterSubmitted(true);
+      setFooterEmail("");
+    } catch (error) {
+      console.error('PDF signup failed:', error);
+      setFooterSubmitted(true); // Still show success for better UX
+    }
   };
 
   return (
@@ -174,7 +311,7 @@ export default function LeadSparkClassicToggle() {
       <header className="max-w-6xl mx-auto flex justify-between items-center px-4 py-4 border-b border-slate-200 relative z-50">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 bg-slate-900 rounded-2xl" />
-          <span className="font-semibold">LeadSpark</span>
+          <span className="font-semibold">LeadApp</span>
         </div>
       </header>
 
@@ -314,14 +451,18 @@ export default function LeadSparkClassicToggle() {
             <p className="text-xs text-slate-600">{active.help}</p>
           </div>
 
-          {success ? (
+          {formSubmitted ? (
             <div className="text-center py-8">
               <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-100 grid place-items-center mb-3">✅</div>
-              <div className="text-lg font-semibold">{success}</div>
+              <div className="text-lg font-semibold">Got it — we&apos;ll send your 20 similar companies + contacts by email.</div>
               <p className="text-sm text-slate-600 mt-1">We&apos;ll reply from team@yourdomain.com. Check spam just in case.</p>
             </div>
           ) : (
-            <form onSubmit={submit}>
+            <form
+              action={FORMSPREE_ENDPOINT}
+              method="POST"
+              onSubmit={handleFormSubmit}
+            >
               {/* Reference company */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-slate-700">
@@ -329,10 +470,12 @@ export default function LeadSparkClassicToggle() {
                 </label>
                 <input
                   type="text"
+                  name="refCompany"
                   className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all duration-200"
                   placeholder={active.refPlaceholder}
                   value={refCompany}
                   onChange={(e) => setRefCompany(e.target.value)}
+                  required
                 />
               </div>
 
@@ -343,10 +486,12 @@ export default function LeadSparkClassicToggle() {
                 </label>
                 <input
                   type="email"
+                  name="email"
                   className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all duration-200"
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
                 <p className="mt-1 text-xs text-slate-500">
                   We&apos;ll deliver your 10-company list here. No spam.
@@ -372,6 +517,7 @@ export default function LeadSparkClassicToggle() {
                       </label>
                       <input
                         type="text"
+                        name="industry"
                         placeholder="e.g., 9506 or Outdoor Gear"
                         value={industry}
                         onChange={(e) => setIndustry(e.target.value)}
@@ -384,6 +530,7 @@ export default function LeadSparkClassicToggle() {
                       </label>
                       <input
                         type="text"
+                        name="region"
                         placeholder="e.g., US, EU, LATAM"
                         value={region}
                         onChange={(e) => setRegion(e.target.value)}
@@ -396,6 +543,7 @@ export default function LeadSparkClassicToggle() {
                       </label>
                       <input
                         type="text"
+                        name="keywords"
                         placeholder="e.g., injection molding, DTC brands, sporting goods"
                         value={keywords}
                         onChange={(e) => setKeywords(e.target.value)}
@@ -406,20 +554,33 @@ export default function LeadSparkClassicToggle() {
                 )}
               </div>
 
+              {/* Hidden fields for additional data */}
+              <input type="hidden" name="mode" value={active.label} />
+              <input type="hidden" name="modeId" value={mode} />
+              <input type="hidden" name="submittedAt" value={new Date().toISOString()} />
+              <input type="hidden" name="offer" value="20 similar companies + verified contacts" />
+
               {/* honeypot */}
-              <input type="text" value={hp} onChange={e=>setHp(e.target.value)} className="hidden" aria-hidden="true" tabIndex={-1} />
+              <input
+                type="text"
+                name="hp"
+                value={hp}
+                onChange={e=>setHp(e.target.value)}
+                className="hidden"
+                aria-hidden="true"
+                tabIndex={-1}
+              />
 
               {/* Submit */}
               <div className="mt-6">
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={isSubmitting}
                   className="w-full rounded-xl bg-slate-900 px-6 py-4 text-center text-base font-semibold text-white shadow-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/20 disabled:opacity-60 transition-all duration-200 hover:shadow-xl"
                 >
-                  {submitting ? 'Sending…' : 'Get my free leads →'}
+                  {isSubmitting ? 'Sending…' : 'Get my free leads →'}
                 </button>
               </div>
-              {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
               <p className="text-xs text-slate-500 mt-2">By submitting, you agree to receive your lead list by email. We only send what you request.</p>
             </form>
           )}
@@ -521,7 +682,7 @@ export default function LeadSparkClassicToggle() {
               <p className="text-green-700 text-sm">Check your email for a confirmation link.</p>
             </div>
           ) : (
-            <div className="max-w-md mx-auto">
+            <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto">
               <div className="flex gap-3">
                 <input
                   type="email"
@@ -529,21 +690,17 @@ export default function LeadSparkClassicToggle() {
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all duration-200"
+                  required
                 />
                 <button
-                  onClick={() => {
-                    if (newsletterEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletterEmail)) {
-                      setNewsletterSubmitted(true);
-                      setNewsletterEmail("");
-                    }
-                  }}
+                  type="submit"
                   className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/20 transition-all duration-200 hover:shadow-xl"
                 >
                   Join the list
                 </button>
               </div>
               <p className="mt-3 text-xs text-slate-500">No spam, just valuable insights. Unsubscribe anytime.</p>
-            </div>
+            </form>
           )}
         </div>
       </section>
@@ -568,7 +725,7 @@ export default function LeadSparkClassicToggle() {
 
       <footer className="text-center text-slate-500 text-sm py-6 pb-24 border-t border-slate-200">
         <div className="flex items-center justify-center gap-4">
-          <span>© {new Date().getFullYear()} LeadSpark — B2B leads, simplified.</span>
+          <span>© {new Date().getFullYear()} LeadApp — B2B leads, simplified.</span>
           <span>•</span>
           <a href="/legal" className="text-slate-500 hover:text-slate-700 underline">
             Legal & Contact
@@ -605,26 +762,22 @@ export default function LeadSparkClassicToggle() {
                   <span>Thanks — check your inbox.</span>
                 </div>
               ) : (
-                <div className="flex gap-2 w-full sm:w-auto">
+                <form onSubmit={handlePDFSubmit} className="flex gap-2 w-full sm:w-auto">
                   <input
                     type="email"
                     placeholder="your@email.com"
                     value={footerEmail}
                     onChange={(e) => setFooterEmail(e.target.value)}
                     className="flex-1 sm:w-48 rounded-lg border border-slate-600 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+                    required
                   />
                   <button
-                    onClick={() => {
-                      if (footerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(footerEmail)) {
-                        setFooterSubmitted(true);
-                        setFooterEmail("");
-                      }
-                    }}
+                    type="submit"
                     className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-200"
                   >
                     Get the PDF
                   </button>
-                </div>
+                </form>
               )}
             </div>
           </div>

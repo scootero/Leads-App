@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LeadSpark - Connect Suppliers with Buyers",
+  title: "LeadApp - Connect Suppliers with Buyers",
   description: "Generate qualified leads for your business. Connect suppliers with buyers through our lead generation platform.",
 };
 
