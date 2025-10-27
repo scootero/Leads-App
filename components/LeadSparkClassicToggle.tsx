@@ -191,7 +191,7 @@ export default function LeadAppClassicToggle() {
     try {
       // Test newsletter table connection
       console.log('Testing newsletter table connection...');
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from('newsletter_signups')
         .select('*')
         .limit(1);
@@ -251,7 +251,7 @@ export default function LeadAppClassicToggle() {
     try {
       // Test newsletter table connection
       console.log('Testing newsletter table connection for PDF...');
-      const { data: testData, error: testError } = await supabase
+      const { error: testError } = await supabase
         .from('newsletter_signups')
         .select('*')
         .limit(1);

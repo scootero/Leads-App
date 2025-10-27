@@ -53,9 +53,10 @@ export async function POST() {
         await markJobCompleted(job.id);
         processed++;
         console.log(`✅ Successfully processed job ${job.id}`);
-      } catch (error: any) {
-        console.error(`❌ Job ${job.id} failed:`, error.message);
-        await markJobFailed(job.id, job.attempts, error.message);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`❌ Job ${job.id} failed:`, errorMessage);
+        await markJobFailed(job.id, job.attempts, errorMessage);
       }
     }
 
@@ -68,16 +69,17 @@ export async function POST() {
       processed
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('❌ Queue processing failed:', error);
     return NextResponse.json(
-      { error: 'Queue processing failed', details: error.message },
+      { error: 'Queue processing failed', details: errorMessage },
       { status: 500 }
     );
   }
 }
 
-async function processLeadGeneration(job: any) {
+async function processLeadGeneration(job: { id: string; data: { lead_submission_id: string }; attempts: number; max_attempts: number }) {
   const leadId = job.data.lead_submission_id;
 
   if (!leadId) {
@@ -138,13 +140,14 @@ async function processLeadGeneration(job: any) {
 
     console.log(`✅ Lead generation completed for ${lead.ref_company}: ${companies.length} companies found`);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     // Update lead with error
     await supabaseAdmin
       .from('lead_submissions')
       .update({
         processing_status: 'failed',
-        processing_error: error.message,
+        processing_error: errorMessage,
         processing_completed_at: new Date().toISOString()
       })
       .eq('id', leadId);
@@ -153,7 +156,7 @@ async function processLeadGeneration(job: any) {
   }
 }
 
-async function generateCompanies(lead: any) {
+async function generateCompanies(lead: { ref_company: string; industry?: string; region?: string; keywords?: string; mode?: string; mode_id?: string }) {
   console.log('🤖 Starting ChatGPT API call...');
   console.log('📝 Input data:', {
     ref_company: lead.ref_company,
@@ -282,15 +285,16 @@ Make sure the JSON is valid and contains exactly 20 companies.
 
     console.log('📋 Sample company:', companies[0]);
     return companies.slice(0, 20); // Ensure max 20 companies
-  } catch (parseError: any) {
+  } catch (parseError: unknown) {
+    const parseErrorMessage = parseError instanceof Error ? parseError.message : String(parseError);
     console.error('❌ Failed to parse ChatGPT response:', parseError);
     console.error('📄 Raw response that failed to parse:', rawContent);
     console.error('🧹 Cleaned content:', rawContent.trim().substring(0, 500));
-    throw new Error(`Failed to parse ChatGPT response: ${parseError.message}`);
+    throw new Error(`Failed to parse ChatGPT response: ${parseErrorMessage}`);
   }
 }
 
-async function saveCompanies(leadId: string, companies: any[]) {
+async function saveCompanies(leadId: string, companies: { name: string; url?: string; industry?: string; size?: string; location?: string; why_chosen?: string }[]) {
   console.log('💾 Saving companies to database...');
   console.log('📊 Total companies to insert:', companies.length);
 
@@ -348,14 +352,15 @@ async function processEmailJobs() {
       await processEmailJob(job);
       await markJobCompleted(job.id);
       console.log(`✅ Successfully processed email job ${job.id}`);
-    } catch (error: any) {
-      console.error(`❌ Email job ${job.id} failed:`, error.message);
-      await markJobFailed(job.id, job.attempts, error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`❌ Email job ${job.id} failed:`, errorMessage);
+      await markJobFailed(job.id, job.attempts, errorMessage);
     }
   }
 }
 
-async function processEmailJob(job: any) {
+async function processEmailJob(job: { id: string; data: { lead_submission_id: string; customer_id: string; companies_count: number } }) {
   const leadId = job.data.lead_submission_id;
 
   if (!leadId) {
@@ -405,7 +410,7 @@ async function processEmailJob(job: any) {
     .eq('id', leadId);
 }
 
-async function sendLeadResultsEmail(email: string, refCompany: string, companies: any[]) {
+async function sendLeadResultsEmail(email: string, refCompany: string, companies: { company_name: string; website?: string; industry?: string; company_size?: string; location?: string; why_chosen?: string }[]) {
   const resendApiKey = process.env.RESEND_API_KEY;
 
   if (!resendApiKey) {

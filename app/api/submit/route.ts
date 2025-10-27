@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     }
 
     let customerId: string;
-    let result: any;
+    let result: { success: boolean; message: string; data?: unknown; customerId?: string; leadSubmissionId?: string };
 
     // Handle different form types
     switch (formType) {
@@ -75,11 +75,12 @@ export async function POST(request: Request) {
 
         if (leadError) throw leadError;
 
-        result = {
-          customerId,
-          leadSubmissionId: leadSubmission.id,
-          message: 'Lead submission saved successfully'
-        };
+         result = {
+           success: true,
+           customerId,
+           leadSubmissionId: leadSubmission.id,
+           message: 'Lead submission saved successfully'
+         };
         break;
 
       case 'newsletter':
@@ -104,6 +105,7 @@ export async function POST(request: Request) {
               .single();
 
             result = {
+              success: true,
               customerId: existingNewsletter?.id,
               message: 'Newsletter signup successful (already subscribed)'
             };
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
           }
         } else {
           result = {
+            success: true,
             customerId: newsletterCustomer.id,
             message: 'Newsletter signup successful'
           };
@@ -140,6 +143,7 @@ export async function POST(request: Request) {
               .single();
 
             result = {
+              success: true,
               customerId: existingPdf?.id,
               message: 'PDF request successful (already requested)'
             };
@@ -148,6 +152,7 @@ export async function POST(request: Request) {
           }
         } else {
           result = {
+            success: true,
             customerId: pdfCustomer.id,
             message: 'PDF request successful'
           };
@@ -164,26 +169,29 @@ export async function POST(request: Request) {
     console.log('Form submission successful:', result);
     console.log('✅ Successfully processed formType:', formType, 'for email:', email);
 
-    return NextResponse.json({
-      success: true,
-      ...result
-    }, { status: 200 });
+    return NextResponse.json(result, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = error && typeof error === 'object' && 'code' in error ? (error as { code: string }).code : undefined;
+    const errorDetails = error && typeof error === 'object' && 'details' in error ? (error as { details: string }).details : undefined;
+    const errorHint = error && typeof error === 'object' && 'hint' in error ? (error as { hint: string }).hint : undefined;
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     console.error('Form submission error:', {
-      message: error.message,
-      code: error.code,
-      details: error.details,
-      hint: error.hint,
-      stack: error.stack
+      message: errorMessage,
+      code: errorCode,
+      details: errorDetails,
+      hint: errorHint,
+      stack: errorStack
     });
 
     return NextResponse.json(
       {
         error: 'Failed to save form submission',
-        details: error.message,
-        code: error.code,
-        hint: error.hint
+        details: errorMessage,
+        code: errorCode,
+        hint: errorHint
       },
       { status: 500 }
     );

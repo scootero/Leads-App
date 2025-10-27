@@ -1,7 +1,36 @@
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Verify the secret token
+    const authHeader = request.headers.get('authorization');
+    const expectedToken = process.env.CRON_SECRET || 'your-secret-token-change-this';
+
+    // Debug logging
+    console.log('🔍 Auth Debug:', {
+      hasHeader: !!authHeader,
+      headerLength: authHeader?.length,
+      headerPreview: authHeader ? `${authHeader.substring(0, 20)}...` : 'none',
+      hasToken: !!expectedToken,
+      tokenLength: expectedToken?.length,
+      tokenPreview: expectedToken ? `${expectedToken.substring(0, 10)}...` : 'none'
+    });
+
+    // More flexible token comparison (case-insensitive, strip whitespace)
+    const normalizedHeader = authHeader?.trim().toLowerCase();
+    const normalizedExpected = `bearer ${expectedToken}`.trim().toLowerCase();
+
+    if (!normalizedHeader || normalizedHeader !== normalizedExpected) {
+      console.error('❌ Unauthorized cron job attempt', {
+        received: normalizedHeader,
+        expected: normalizedExpected
+      });
+      return NextResponse.json(
+        { error: 'Unauthorized', debug: { receivedHeader: normalizedHeader } },
+        { status: 401 }
+      );
+    }
+
     console.log('⏰ Cron job triggered - processing queue...');
 
     // Call our existing queue processing API
@@ -27,12 +56,12 @@ export async function GET() {
       result
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Cron job failed:', error);
     return NextResponse.json(
       {
         error: 'Cron job failed',
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       },
       { status: 500 }
