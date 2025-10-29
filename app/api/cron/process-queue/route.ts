@@ -387,7 +387,7 @@ async function sendLeadResultsEmail(email: string, refCompany: string, companies
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'LeadApp <delivered@resend.dev>',
+      from: 'LeadApp <noreply@designsmidwestsales.com>',
       to: [email],
       subject: `Your Free Lead List: ${companies.length} Companies Similar to ${refCompany}`,
       text: `Here are your companies:\n\n${textLines}\n\nReply if you want contacts added.`,
