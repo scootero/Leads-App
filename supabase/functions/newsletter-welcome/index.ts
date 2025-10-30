@@ -103,26 +103,47 @@ async function generateWelcomePDF(email: string, signupType: string): Promise<st
 
 async function sendWelcomeEmail(email: string, signupType: string, pdfContent: string) {
   try {
-    // Use Supabase's built-in email service or integrate with Resend/SendGrid
-    // For now, we'll use a placeholder implementation
+    const resendApiKey = Deno.env.get('RESEND_API_KEY') ?? ''
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY is not set for Edge Function')
+    }
 
     const emailTemplate = getEmailTemplate(signupType)
 
-    console.log(`Sending welcome email to: ${email}`)
-    console.log(`Email template: ${emailTemplate}`)
-    console.log(`PDF content: ${pdfContent}`)
+    const subject = signupType === 'pdf'
+      ? 'Your PDF guide is ready'
+      : 'Thanks for subscribing!'
 
-    // TODO: Implement actual email sending
-    // This could be:
-    // 1. Supabase's built-in email service
-    // 2. Resend API
-    // 3. SendGrid API
-    // 4. AWS SES
+    const text = signupType === 'pdf'
+      ? `Thanks for signing up! Here's your guide:\n\n${pdfContent}\n\n— LeadApp`
+      : `Thanks for subscribing! You're on the list.\n\n— LeadApp`
 
-    return { success: true, messageId: 'placeholder-message-id' }
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'LeadApp <noreply@designsmidwestsales.com>',
+        to: [email],
+        subject,
+        text,
+        html: emailTemplate
+      })
+    })
+
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`Resend failed: ${res.status} ${errText}`)
+    }
+
+    const body = await res.json()
+    console.log('Welcome email sent:', body.id)
+    return { success: true, messageId: body.id as string }
   } catch (error) {
     console.error('Error sending email:', error)
-    return { success: false, error: error.message }
+    return { success: false, error: (error as Error).message }
   }
 }
 

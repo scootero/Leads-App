@@ -52,31 +52,33 @@ CREATE TRIGGER update_customers_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Enable the http extension for making HTTP requests
-CREATE EXTENSION IF NOT EXISTS http;
+-- Prefer pg_net for HTTP from Postgres
+CREATE EXTENSION IF NOT EXISTS pg_net;
 
 -- Create function to invoke newsletter welcome Edge Function
 CREATE OR REPLACE FUNCTION trigger_newsletter_welcome()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Call the newsletter-welcome Edge Function
-  PERFORM
-    http_post(
-      url := 'https://gzhfvzzhrpqngvuxxdgs.supabase.co/functions/v1/newsletter-welcome',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
-      ),
+  -- Call the newsletter-welcome Edge Function via pg_net.
+  -- Do not block inserts if the HTTP call fails.
+  BEGIN
+    PERFORM net.http_post(
+      url := 'https://gzhfvzzhrpqngvuxxdgs.functions.supabase.co/newsletter-welcome',
+      headers := jsonb_build_object('Content-Type', 'application/json'),
       body := jsonb_build_object(
         'customer_id', NEW.id,
         'email', NEW.email,
         'signup_type', NEW.signup_type
-      )
+      ),
+      timeout_milliseconds := 5000
     );
+  EXCEPTION WHEN OTHERS THEN
+    PERFORM pg_log_notice('newsletter-welcome call failed: %', SQLERRM);
+  END;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Create function to invoke lead processor Edge Function
 CREATE OR REPLACE FUNCTION trigger_lead_processor()

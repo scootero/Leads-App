@@ -1,6 +1,77 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+// Email templates for newsletter and PDF signups
+const getEmailTemplate = (signupType: 'newsletter' | 'pdf'): { subject: string; text: string; html: string } => {
+  const templates = {
+    newsletter: {
+      subject: 'Thanks for subscribing!',
+      text: `Thanks for subscribing! You're on the list.\n\n— LeadApp`,
+      html: `
+        <h1>Welcome to LeadApp Newsletter!</h1>
+        <p>Thank you for subscribing to our newsletter. You'll receive valuable insights and updates about lead generation.</p>
+        <p>As a welcome gift, here's your free PDF guide to get you started!</p>
+        <p>Best regards,<br>The LeadApp Team</p>
+      `
+    },
+    pdf: {
+      subject: 'Your PDF guide is ready',
+      text: `Thanks for signing up! Here's your guide.\n\n— LeadApp`,
+      html: `
+        <h1>Thanks for Your Interest!</h1>
+        <p>Thank you for requesting our free PDF guide. Here's your download!</p>
+        <p>This guide contains valuable strategies for lead generation that you can implement right away.</p>
+        <p>Best regards,<br>The LeadApp Team</p>
+      `
+    }
+  };
+
+  return templates[signupType];
+};
+
+// Send welcome email directly using Resend
+async function sendWelcomeEmail(email: string, signupType: 'newsletter' | 'pdf') {
+  try {
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY environment variable not set');
+    }
+
+    const template = getEmailTemplate(signupType);
+
+    console.log(`📧 Sending ${signupType} welcome email to: ${email}`);
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'LeadApp <noreply@designsmidwestsales.com>',
+        to: [email],
+        subject: template.subject,
+        text: template.text,
+        html: template.html
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Resend API error:', errorText);
+      throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Welcome email sent successfully:', result.id);
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('❌ Error sending welcome email:', error);
+    // Don't fail the request if email fails
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -106,18 +177,24 @@ export async function POST(request: Request) {
 
             result = {
               success: true,
-              customerId: existingNewsletter?.id,
-              message: 'Newsletter signup successful (already subscribed)'
-            };
+            customerId: existingNewsletter?.id,
+            message: 'Newsletter signup successful (already subscribed)'
+          };
+
+          // Send welcome email even if already subscribed
+          await sendWelcomeEmail(email, 'newsletter');
           } else {
             throw newsletterError;
           }
         } else {
           result = {
             success: true,
-            customerId: newsletterCustomer.id,
-            message: 'Newsletter signup successful'
-          };
+          customerId: newsletterCustomer.id,
+          message: 'Newsletter signup successful'
+        };
+
+        // Send welcome email directly
+        await sendWelcomeEmail(email, 'newsletter');
         }
         break;
 
@@ -144,18 +221,24 @@ export async function POST(request: Request) {
 
             result = {
               success: true,
-              customerId: existingPdf?.id,
-              message: 'PDF request successful (already requested)'
-            };
+            customerId: existingPdf?.id,
+            message: 'PDF request successful (already requested)'
+          };
+
+          // Send welcome email even if already requested
+          await sendWelcomeEmail(email, 'pdf');
           } else {
             throw pdfError;
           }
         } else {
           result = {
             success: true,
-            customerId: pdfCustomer.id,
-            message: 'PDF request successful'
-          };
+          customerId: pdfCustomer.id,
+          message: 'PDF request successful'
+        };
+
+        // Send welcome email directly
+        await sendWelcomeEmail(email, 'pdf');
         }
         break;
 
