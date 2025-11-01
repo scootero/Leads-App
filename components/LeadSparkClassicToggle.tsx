@@ -316,30 +316,30 @@ export default function LeadAppClassicToggle() {
       </header>
 
       {/* HERO + FORM */}
-      <section className="max-w-6xl mx-auto px-4 pt-14 pb-10 grid md:grid-cols-2 gap-16 items-start">
-        <div data-hero-text className="flex flex-col justify-start h-full pl-8 pr-4">
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+      <section className="max-w-6xl mx-auto px-4 pt-8 sm:pt-14 pb-6 sm:pb-10 grid md:grid-cols-2 gap-8 sm:gap-16 items-start">
+        <div data-hero-text className="flex flex-col justify-start h-full px-2 sm:pl-8 sm:pr-4 order-2 md:order-1">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
             Get 10 Similar Companies + Verified Contacts — Free
           </h1>
 
           {/* Split into separate paragraphs with proper spacing and animations */}
-          <p className={`mt-8 text-slate-600 text-lg transition-all duration-500 ${showTextAnimations ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
+          <p className={`mt-6 sm:mt-8 text-slate-600 text-base sm:text-lg transition-all duration-500 ${showTextAnimations ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
             Instantly find 10 companies that look like your best customers — and the people to contact.
           </p>
-          <p className={`mt-4 text-slate-600 text-lg transition-all duration-500 delay-75 ${showTextAnimations ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
+          <p className={`mt-3 sm:mt-4 text-slate-600 text-base sm:text-lg transition-all duration-500 delay-75 ${showTextAnimations ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}>
             Built by a small team of B2B-sales nerds — no scraping, no spam.
           </p>
 
           {/* Enhanced 3-step visual flow with animations */}
-          <div data-flowchart className="mt-16 relative">
-            <div className="flex items-center justify-center gap-8 text-base text-slate-700">
-
+          <div data-flowchart className="mt-8 sm:mt-16 relative">
+            {/* Desktop view - horizontal layout */}
+            <div className="hidden sm:flex items-center justify-center gap-4 md:gap-8 text-base text-slate-700">
               {/* Step 1: Company Input */}
               <div className={`flex flex-col items-center text-center transition-all duration-1000 ${showFlowchart ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <div className="relative">
-                  <div className="w-20 h-20 mb-4 flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl shadow-lg border border-blue-200">
+                  <div className="w-16 md:w-20 h-16 md:h-20 mb-4 flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl shadow-lg border border-blue-200">
                     {/* Enhanced building/company icon */}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-10 h-10 text-blue-600">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 md:w-10 md:h-10 text-blue-600">
                       <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
                       <path d="M9 9h6v6H9z"/>
                       <path d="M9 15h6v2H9z"/>
@@ -357,8 +357,8 @@ export default function LeadAppClassicToggle() {
               {/* Arrow 1 */}
               <div className={`transition-all duration-1000 delay-300 ${showFlowchart ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
                 <div className="flex items-center">
-                  <div className="w-12 h-0.5 bg-gradient-to-r from-blue-400 to-emerald-400"></div>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-emerald-500 ml-1">
+                  <div className="w-8 md:w-12 h-0.5 bg-gradient-to-r from-blue-400 to-emerald-400"></div>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 md:w-6 md:h-6 text-emerald-500 ml-1">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </div>
@@ -367,9 +367,9 @@ export default function LeadAppClassicToggle() {
               {/* Step 2: AI Search */}
               <div className={`flex flex-col items-center text-center transition-all duration-1000 delay-500 ${showFlowchart ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <div className="relative">
-                  <div className="w-20 h-20 mb-4 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl shadow-lg border border-emerald-200">
+                  <div className="w-16 md:w-20 h-16 md:h-20 mb-4 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl shadow-lg border border-emerald-200">
                     {/* Enhanced AI/search icon */}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-10 h-10 text-emerald-600">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 md:w-10 md:h-10 text-emerald-600">
                       <circle cx="11" cy="11" r="8"/>
                       <path d="m21 21-4.35-4.35"/>
                       <circle cx="11" cy="11" r="3" fill="currentColor" opacity="0.3"/>
@@ -387,8 +387,8 @@ export default function LeadAppClassicToggle() {
               {/* Arrow 2 */}
               <div className={`transition-all duration-1000 delay-700 ${showFlowchart ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
                 <div className="flex items-center">
-                  <div className="w-12 h-0.5 bg-gradient-to-r from-emerald-400 to-purple-400"></div>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-purple-500 ml-1">
+                  <div className="w-8 md:w-12 h-0.5 bg-gradient-to-r from-emerald-400 to-purple-400"></div>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 md:w-6 md:h-6 text-purple-500 ml-1">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </div>
@@ -397,9 +397,9 @@ export default function LeadAppClassicToggle() {
               {/* Step 3: Results */}
               <div className={`flex flex-col items-center text-center transition-all duration-1000 delay-1000 ${showFlowchart ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <div className="relative">
-                  <div className="w-20 h-20 mb-4 flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl shadow-lg border border-purple-200">
+                  <div className="w-16 md:w-20 h-16 md:h-20 mb-4 flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl shadow-lg border border-purple-200">
                     {/* Enhanced email/inbox icon */}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-10 h-10 text-purple-600">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 md:w-10 md:h-10 text-purple-600">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                       <polyline points="22,6 12,13 2,6"/>
                       <circle cx="12" cy="13" r="2" fill="currentColor" opacity="0.3"/>
@@ -415,8 +415,85 @@ export default function LeadAppClassicToggle() {
               </div>
             </div>
 
+            {/* Mobile view - vertical layout */}
+            <div className="flex flex-col sm:hidden gap-6 text-base text-slate-700">
+              {/* Step 1: Company Input */}
+              <div className={`flex items-center gap-4 transition-all duration-1000 ${showFlowchart ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+                <div className="relative">
+                  <div className="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl shadow-lg border border-blue-200">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 text-blue-600">
+                      <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>
+                      <path d="M9 9h6v6H9z"/>
+                      <path d="M9 15h6v2H9z"/>
+                    </svg>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    1
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-slate-800">Enter 1 company</span>
+                  <p className="text-xs text-slate-500 mt-1">Your reference customer</p>
+                </div>
+              </div>
+
+              {/* Mobile Arrow 1 */}
+              <div className={`flex justify-center transition-all duration-1000 delay-300 ${showFlowchart ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-emerald-500 transform rotate-90">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+
+              {/* Step 2: AI Search */}
+              <div className={`flex items-center gap-4 transition-all duration-1000 delay-500 ${showFlowchart ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+                <div className="relative">
+                  <div className="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl shadow-lg border border-emerald-200">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 text-emerald-600">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                      <circle cx="11" cy="11" r="3" fill="currentColor" opacity="0.3"/>
+                    </svg>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    2
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-slate-800">We find 10 look-alikes</span>
+                  <p className="text-xs text-slate-500 mt-1">AI-powered matching</p>
+                </div>
+              </div>
+
+              {/* Mobile Arrow 2 */}
+              <div className={`flex justify-center transition-all duration-1000 delay-700 ${showFlowchart ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-purple-500 transform rotate-90">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+
+              {/* Step 3: Results */}
+              <div className={`flex items-center gap-4 transition-all duration-1000 delay-1000 ${showFlowchart ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+                <div className="relative">
+                  <div className="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl shadow-lg border border-purple-200">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-8 h-8 text-purple-600">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                      <circle cx="12" cy="13" r="2" fill="currentColor" opacity="0.3"/>
+                    </svg>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    3
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-slate-800">Get verified contacts</span>
+                  <p className="text-xs text-slate-500 mt-1">Delivered to your inbox</p>
+                </div>
+              </div>
+            </div>
+
             {/* Progress indicator */}
-            <div className="mt-8 flex justify-center">
+            <div className="mt-6 sm:mt-8 flex justify-center">
               <div className="flex gap-2">
                 <div className={`w-2 h-2 rounded-full transition-all duration-500 ${showFlowchart ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                 <div className={`w-2 h-2 rounded-full transition-all duration-500 delay-200 ${showFlowchart ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
@@ -426,16 +503,16 @@ export default function LeadAppClassicToggle() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-8">
+        <div className="rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-4 sm:p-6 md:p-8 order-1 md:order-2">
           {/* Tab bar (short labels) */}
-          <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5">
+          <div className="flex items-center gap-1 sm:gap-2 rounded-xl bg-slate-100 p-1.5">
             {MODES.map((m) => (
               <button
                 key={m.id}
                 type="button"
                 onClick={() => setMode(m.id)}
                 className={
-                  "flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 " +
+                  "flex-1 rounded-lg px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold transition-all duration-200 " +
                   (mode === m.id
                     ? "bg-slate-700 shadow-md ring-1 ring-slate-500 text-white"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-300 hover:border-slate-400")
@@ -454,7 +531,7 @@ export default function LeadAppClassicToggle() {
           {formSubmitted ? (
             <div className="text-center py-8">
               <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-100 grid place-items-center mb-3">✅</div>
-              <div className="text-lg font-semibold">Got it — we&apos;ll send your 20 similar companies + contacts by email.</div>
+              <div className="text-lg font-semibold">Got it — we&apos;ll send your 10 similar companies + contacts by email.</div>
               <p className="text-sm text-slate-600 mt-1">We&apos;ll reply from team@yourdomain.com. Check spam just in case.</p>
             </div>
           ) : (
@@ -558,7 +635,7 @@ export default function LeadAppClassicToggle() {
               <input type="hidden" name="mode" value={active.label} />
               <input type="hidden" name="modeId" value={mode} />
               <input type="hidden" name="submittedAt" value={new Date().toISOString()} />
-              <input type="hidden" name="offer" value="20 similar companies + verified contacts" />
+              <input type="hidden" name="offer" value="10 similar companies + verified contacts" />
 
               {/* honeypot */}
               <input
@@ -589,7 +666,7 @@ export default function LeadAppClassicToggle() {
 
       {/* BADGES */}
       <section className="max-w-6xl mx-auto px-4 pb-6">
-        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-slate-500 justify-center sm:justify-start">
           <span className="px-2 py-1 rounded-full bg-slate-100 border">Free beta</span>
           <span className="px-2 py-1 rounded-full bg-slate-100 border">No credit card</span>
           <span className="px-2 py-1 rounded-full bg-slate-100 border">Results by email</span>
@@ -598,9 +675,11 @@ export default function LeadAppClassicToggle() {
       </section>
 
       {/* EXAMPLE */}
-      <section className="max-w-6xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold">What you&apos;ll receive (example)</h2>
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
+        <h2 className="text-xl sm:text-2xl font-bold">What you&apos;ll receive (example)</h2>
+
+        {/* Desktop table - hidden on mobile */}
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm hidden sm:block">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -650,27 +729,96 @@ export default function LeadAppClassicToggle() {
             </table>
           </div>
         </div>
+
+        {/* Mobile cards - shown only on small screens */}
+        <div className="mt-4 sm:hidden space-y-4">
+          {/* Card 1 */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold">Alpine Gearworks</h3>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Company 1/3</span>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Website:</span>
+                <span className="col-span-2">alpinegearworks.io</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Contact:</span>
+                <span className="col-span-2">Priya Patel</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Role:</span>
+                <span className="col-span-2">Supply Chain Manager</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Email:</span>
+                <span className="col-span-2 break-all">priya.patel@alpinegearworks.io</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Why chosen:</span>
+                <span className="col-span-2">Same materials and target retailers</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-semibold">Meridian Outdoors</h3>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Company 2/3</span>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Website:</span>
+                <span className="col-span-2">meridian-outdoors.com</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Contact:</span>
+                <span className="col-span-2">Connor Lee</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Role:</span>
+                <span className="col-span-2">Category Buyer</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Email:</span>
+                <span className="col-span-2 break-all">connor.lee@meridian-outdoors.com</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                <span className="text-slate-500">Why chosen:</span>
+                <span className="col-span-2">Overlapping product specs and distributors</span>
+              </div>
+            </div>
+          </div>
+
+          {/* More indicator */}
+          <div className="text-center py-3 text-slate-500">
+            <span className="text-lg">⋯</span>
+            <p className="text-sm mt-1">+ 8 more companies with verified contacts</p>
+          </div>
+        </div>
       </section>
 
       {/* NEWSLETTER SIGNUP */}
-      <section className="max-w-4xl mx-auto px-4 py-16">
+      <section className="max-w-4xl mx-auto px-4 py-10 sm:py-16">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-slate-700">
+          <div className="inline-flex items-center gap-2 mb-4 sm:mb-6">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-2xl flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-700">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
             </div>
-            <h2 className="text-3xl font-bold">Stay in the loop</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">Stay in the loop</h2>
           </div>
 
-          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
             Get monthly tips on finding leads + exclusive access to new prospecting tools before they&apos;re public.
           </p>
 
           {newsletterSubmitted ? (
-            <div className="max-w-md mx-auto p-6 bg-green-50 border border-green-200 rounded-2xl">
+            <div className="max-w-md mx-auto p-4 sm:p-6 bg-green-50 border border-green-200 rounded-2xl">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-green-600">
@@ -683,7 +831,7 @@ export default function LeadAppClassicToggle() {
             </div>
           ) : (
             <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto">
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
                   placeholder="your@email.com"
@@ -706,40 +854,51 @@ export default function LeadAppClassicToggle() {
       </section>
 
       {/* ROADMAP */}
-      <section className="max-w-6xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold">What&apos;s next (sneak peek)</h2>
-        <div className="mt-6 grid sm:grid-cols-3 gap-6">
+      <section className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
+        <h2 className="text-xl sm:text-2xl font-bold">What&apos;s next (sneak peek)</h2>
+        <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {[
             {title: "Chrome Saver", body: "One‑click save emails from any page into your lists."},
             {title: "GMass‑ready CSV", body: "Download cleaned lists or push straight to your Gmail campaigns."},
             {title: "Outreach Dashboard", body: "Track opens, clicks, replies in a clean, simple view."},
           ].map((card, i) => (
-            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-lg font-semibold">{card.title}</div>
-              <p className="mt-2 text-slate-600">{card.body}</p>
-              <span className="mt-4 inline-block text-xs text-slate-500">Coming soon</span>
+            <div key={i} className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-slate-700">
+                    {i === 0 && <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />}
+                    {i === 1 && <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />}
+                    {i === 2 && <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />}
+                  </svg>
+                </div>
+                <div className="text-base sm:text-lg font-semibold">{card.title}</div>
+              </div>
+              <p className="mt-2 text-sm sm:text-base text-slate-600">{card.body}</p>
+              <div className="mt-3 sm:mt-4">
+                <span className="inline-block text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">Coming soon</span>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       <footer className="text-center text-slate-500 text-sm py-6 pb-24 border-t border-slate-200">
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
           <span>© {new Date().getFullYear()} LeadApp — B2B leads, simplified.</span>
-          <span>•</span>
+          <span className="hidden sm:inline">•</span>
           <a href="/legal" className="text-slate-500 hover:text-slate-700 underline">
             Legal & Contact
           </a>
         </div>
       </footer>
 
-      {/* Sticky Top Bar */}
+      {/* Sticky Footer Bar */}
       {showFooterBar && (
         <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 shadow-lg z-40">
-          <div className="max-w-5xl mx-auto px-8 py-7">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-7">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+              <div className="flex items-center gap-3 text-center sm:text-left">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center hidden sm:flex">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-slate-900">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <polyline points="14,2 14,8 20,8"/>
@@ -748,9 +907,9 @@ export default function LeadAppClassicToggle() {
                     <polyline points="10,9 9,9 8,9"/>
                   </svg>
                 </div>
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   <span className="font-semibold text-white">Free PDF:</span>
-                  <span className="text-slate-200 ml-1">Prospecting Playbook + Monthly Tips for Finding Quality Leads.</span>
+                  <span className="text-slate-200 ml-1">Prospecting Playbook + Monthly Tips</span>
                 </div>
               </div>
 
@@ -768,14 +927,14 @@ export default function LeadAppClassicToggle() {
                     placeholder="your@email.com"
                     value={footerEmail}
                     onChange={(e) => setFooterEmail(e.target.value)}
-                    className="flex-1 sm:w-48 rounded-lg border border-slate-600 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
+                    className="flex-1 sm:w-48 rounded-lg border border-slate-600 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 shadow-sm outline-none focus:border-white focus:ring-1 focus:ring-white/20"
                     required
                   />
                   <button
                     type="submit"
-                    className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-200"
+                    className="rounded-lg bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-200 whitespace-nowrap"
                   >
-                    Get the PDF
+                    Get PDF
                   </button>
                 </form>
               )}

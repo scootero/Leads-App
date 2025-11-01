@@ -10,6 +10,7 @@ A complete lead generation system with automated email workflows.
 - **Automated Email System** - Welcome emails with Resend
 - **Queue Processing** - Background job processing
 - **Database Triggers** - Automatic workflow triggers
+- **Contact Enrichment** - AI-powered contact discovery
 
 ## 📁 **Project Structure**
 
@@ -17,21 +18,28 @@ A complete lead generation system with automated email workflows.
 ├── app/                    # Next.js app directory
 ├── components/             # React components
 ├── lib/                    # Utility libraries
+│   ├── supabase.ts        # Supabase client
+│   └── contact-enrichment.ts # Contact finding with AI
 ├── sql/                    # Database files (organized)
 │   ├── setup/             # Database setup scripts
+│   │   ├── contact-enrichment-schema.sql # Contact tables
+│   │   └── increment-function.sql        # Usage tracking
 │   ├── testing/           # Testing scripts
 │   ├── debug/             # Debugging scripts
 │   └── archive/           # Old/unused files
 ├── supabase/              # Supabase configuration
 │   └── functions/         # Edge Functions
+├── docs/                  # Documentation
+│   └── CONTACT_ENRICHMENT.md # Contact feature docs
 └── EMAIL_SETUP_GUIDE.md   # Email setup instructions
 ```
 
 ## 🛠️ **Setup**
 
 1. **Database Setup**: Run `sql/setup/create-queue-system.sql`
-2. **Email Setup**: Follow `EMAIL_SETUP_GUIDE.md`
-3. **Environment Variables**: Set up Supabase and Resend keys
+2. **Contact Enrichment**: Run `sql/setup/contact-enrichment-schema.sql`
+3. **Email Setup**: Follow `EMAIL_SETUP_GUIDE.md`
+4. **Environment Variables**: Set up Supabase, OpenAI, and Resend keys
 
 ## 🧪 **Testing**
 
@@ -45,6 +53,7 @@ A complete lead generation system with automated email workflows.
 - **HTML Templates** - Beautiful email designs
 - **Queue Processing** - Automated background processing
 - **Multiple Form Types** - Newsletter, PDF, Lead forms
+- **Contact Discovery** - AI-powered contact finding
 
 ## 🔧 **Tech Stack**
 
@@ -53,13 +62,16 @@ A complete lead generation system with automated email workflows.
 - **Resend** - Email service
 - **PostgreSQL** - Database with triggers
 - **TypeScript** - Type safety
+- **OpenAI API** - AI-powered contact discovery
 
 ## 📋 **Quick Start**
 
 1. Set up database with `sql/setup/create-queue-system.sql`
-2. Configure email with `EMAIL_SETUP_GUIDE.md`
-3. Test with `sql/testing/test-all-form-types.sql`
-4. Deploy and enjoy! 🎉
+2. Set up contact enrichment with `sql/setup/contact-enrichment-schema.sql`
+3. Configure email with `EMAIL_SETUP_GUIDE.md`
+4. Set OpenAI API key in environment variables
+5. Test with `sql/testing/test-all-form-types.sql`
+6. Deploy and enjoy! 🎉
 
 ## 🎯 **Current Status**
 
@@ -69,6 +81,8 @@ A complete lead generation system with automated email workflows.
 - Queue processing automated every 5 minutes
 - Database triggers firing correctly
 - Professional HTML email templates
+- AI-powered contact discovery for leads
+- Multiple contacts per company with tracking
 
 ## 📞 **Support**
 

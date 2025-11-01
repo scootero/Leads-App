@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { processContactEnrichment } from '@/lib/contact-enrichment';
 
 // Import all the processing functions directly
 async function processLeadGeneration(job: { id: string; data: { lead_submission_id: string }; attempts: number; max_attempts: number }) {
@@ -50,7 +51,18 @@ async function processLeadGeneration(job: { id: string; data: { lead_submission_
       })
       .eq('id', leadId);
 
-    // Add email job to queue
+    // Add contact enrichment job to queue
+    await supabaseAdmin
+      .from('processing_queue')
+      .insert({
+        type: 'contact_enrichment',
+        data: { lead_submission_id: leadId },
+        priority: 2, // Higher priority than email
+        status: 'queued',
+        run_at: new Date().toISOString()
+      });
+
+    // Add email job to queue (will run after contact enrichment)
     await supabaseAdmin
       .from('processing_queue')
       .insert({
@@ -58,7 +70,7 @@ async function processLeadGeneration(job: { id: string; data: { lead_submission_
         data: { lead_submission_id: leadId },
         priority: 1,
         status: 'queued',
-        run_at: new Date().toISOString()
+        run_at: new Date(Date.now() + 60000).toISOString() // Delay by 1 minute to allow contact enrichment to complete
       });
 
     console.log(`✅ Lead generation completed for ${lead.ref_company}: ${companies.length} companies found`);
@@ -250,6 +262,40 @@ async function saveCompanies(leadId: string, companies: { name: string; url?: st
   console.log('✅ Successfully inserted companies into database');
 }
 
+async function processContactEnrichmentJobs() {
+  console.log('👤 Processing contact enrichment jobs...');
+
+  const { data: contactJobs, error: claimError } = await supabaseAdmin.rpc('claim_queue', {
+    p_type: 'contact_enrichment',
+    p_limit: 2 // Lower limit to avoid API rate limits
+  });
+
+  if (claimError) {
+    console.error('❌ Error claiming contact enrichment jobs:', claimError);
+    return;
+  }
+
+  if (!contactJobs || contactJobs.length === 0) {
+    console.log('📋 No contact enrichment jobs to process');
+    return;
+  }
+
+  console.log(`📋 Found ${contactJobs.length} contact enrichment jobs to process`);
+
+  for (const job of contactJobs) {
+    try {
+      console.log(`🚀 Processing contact enrichment job ${job.id} (attempt ${job.attempts + 1}/${job.max_attempts})`);
+      await processContactEnrichment(job);
+      await markJobCompleted(job.id);
+      console.log(`✅ Successfully processed contact enrichment job ${job.id}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`❌ Contact enrichment job ${job.id} failed:`, errorMessage);
+      await markJobFailed(job.id, job.attempts, errorMessage);
+    }
+  }
+}
+
 async function processEmailJobs() {
   console.log('📧 Processing email jobs...');
 
@@ -306,10 +352,13 @@ async function processEmailJob(job: { id: string; data: { lead_submission_id: st
     throw new Error(`Lead submission not found: ${leadError?.message}`);
   }
 
-  // Get generated companies (top 10 for email)
+  // Get generated companies with contacts (top 10 for email)
   const { data: companies, error: companiesError } = await supabaseAdmin
     .from('lead_results')
-    .select('*')
+    .select(`
+      *,
+      company_contacts(*)
+    `)
     .eq('lead_submission_id', leadId)
     .order('rank', { ascending: true })
     .limit(10);
@@ -331,6 +380,32 @@ async function processEmailJob(job: { id: string; data: { lead_submission_id: st
       results_sent_at: new Date().toISOString()
     })
     .eq('id', leadId);
+
+  // Mark companies as sent to customer and increment usage counter
+  for (const company of companies) {
+    // Update lead_results to mark as sent
+    await supabaseAdmin
+      .from('lead_results')
+      .update({
+        sent_to_customer: true,
+        sent_at: new Date().toISOString(),
+        times_used: supabaseAdmin.rpc('increment', { row_id: company.id })
+      })
+      .eq('id', company.id);
+
+    // If there are contacts, mark them as sent too
+    if (company.company_contacts && company.company_contacts.length > 0) {
+      for (const contact of company.company_contacts) {
+        await supabaseAdmin
+          .from('company_contacts')
+          .update({
+            sent_to_customer: true,
+            sent_at: new Date().toISOString()
+          })
+          .eq('id', contact.id);
+      }
+    }
+  }
 }
 
 async function sendLeadResultsEmail(email: string, refCompany: string, companies: { company_name: string; website?: string; industry?: string; company_size?: string; location?: string; why_chosen?: string }[]) {
@@ -516,7 +591,10 @@ export async function GET(request: Request) {
         }
       }
 
-      // 3. Process email jobs
+      // 3. Process contact enrichment jobs
+      await processContactEnrichmentJobs();
+
+      // 4. Process email jobs
       await processEmailJobs();
 
       return NextResponse.json({
