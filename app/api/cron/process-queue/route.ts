@@ -425,6 +425,7 @@ async function processEmailJob(job: { id: string; data: { lead_submission_id: st
           .update({
             sent_to_customer: true,
             sent_at: new Date().toISOString(),
+            last_used_at: new Date().toISOString(),
             times_used: supabaseAdmin.rpc('increment', { row_id: companyIds[0] }) // Increment just the first one for now
           })
           .in('id', companyIds) :
@@ -432,13 +433,16 @@ async function processEmailJob(job: { id: string; data: { lead_submission_id: st
 
       // 3. Update all contacts in one batch if there are any
       contactIds.length > 0 ?
-        supabaseAdmin
-          .from('company_contacts')
-          .update({
-            sent_to_customer: true,
-            sent_at: new Date().toISOString()
-          })
-          .in('id', contactIds) :
+        Promise.all(contactIds.map(contactId =>
+          supabaseAdmin
+            .from('company_contacts')
+            .update({
+              sent_to_customer: true,
+              sent_at: new Date().toISOString(),
+              times_used: supabaseAdmin.rpc('increment', { row_id: contactId })
+            })
+            .eq('id', contactId)
+        )) :
         Promise.resolve()
     ]);
 

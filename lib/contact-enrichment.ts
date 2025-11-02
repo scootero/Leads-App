@@ -297,7 +297,10 @@ export async function saveCompanyContacts(companyId: string, contacts: ContactIn
     contact_name: contact.name,
     contact_email: contact.email || null,
     contact_role: contact.role || null,
-    is_primary: index === 0 // First contact is primary
+    is_primary: index === 0, // First contact is primary
+    times_used: 0,
+    sent_to_customer: false,
+    sent_at: null
   }));
 
   console.log('📝 Prepared rows for insertion:', rows.length);
@@ -313,6 +316,15 @@ export async function saveCompanyContacts(companyId: string, contacts: ContactIn
     console.error('❌ Database insertion failed:', insertError);
     throw new Error(`Failed to insert contacts: ${insertError.message}`);
   }
+
+  // Update the lead_results record to indicate contacts were found
+  await supabaseAdmin
+    .from('lead_results')
+    .update({
+      contacts_found: true,
+      contacts_found_at: new Date().toISOString()
+    })
+    .eq('id', companyId);
 
   console.log(`✅ Successfully saved ${rows.length} contacts for company ID ${companyId}`);
 }
