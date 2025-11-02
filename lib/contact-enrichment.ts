@@ -2,8 +2,15 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 interface ContactInfo {
   name: string;
-  role?: string;
-  email?: string;
+  role: string | null;
+  email: string | null;
+}
+
+interface RawContactInfo {
+  name?: string | null;
+  role?: string | null;
+  email?: string | null;
+  [key: string]: unknown;
 }
 
 interface CompanyWithContacts {
@@ -12,10 +19,56 @@ interface CompanyWithContacts {
   contacts: ContactInfo[];
 }
 
+interface OpenAICompanyResponse {
+  company_name: string;
+  company_id?: string;
+  contacts?: RawContactInfo[];
+  [key: string]: unknown;
+}
+
+/**
+ * Validates a contact object to ensure it has reasonable field lengths
+ */
+function validateContact(contact: RawContactInfo): boolean {
+  // Check if name exists and is a reasonable length
+  if (!contact.name || typeof contact.name !== 'string' || contact.name.length > 100) {
+    return false;
+  }
+
+  // Check if role is a reasonable length if it exists
+  if (contact.role && (typeof contact.role !== 'string' || contact.role.length > 100)) {
+    return false;
+  }
+
+  // Check if email is a reasonable length and format if it exists
+  if (contact.email) {
+    if (typeof contact.email !== 'string' || contact.email.length > 100) {
+      return false;
+    }
+
+    // Basic email format validation
+    if (!contact.email.includes('@') || !contact.email.includes('.')) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Sanitizes a string to prevent excessively long values
+ */
+function sanitizeString(str: string | undefined | null, maxLength: number = 100): string | null {
+  if (!str) return null;
+  return str.substring(0, maxLength);
+}
+
 /**
  * Finds contacts for a list of companies using ChatGPT
  */
 export async function findCompanyContacts(companies: { id: string; company_name: string; website: string | null }[]): Promise<CompanyWithContacts[]> {
+  // Define rawContent at the top level scope so it's accessible in catch blocks
+  let rawContent = "";
   console.log('🔍 Finding contacts for companies:', companies.map(c => c.company_name).join(', '));
 
   const openaiApiKey = process.env.OPENAI_API_KEY;
@@ -47,7 +100,12 @@ For each company:
 
 If you cannot find specific people for a company, provide any general contact emails (like sales@company.com, info@company.com).
 
-IMPORTANT: Be thorough in your search. Check multiple pages on each company's website to find the most contacts possible.
+IMPORTANT CONSTRAINTS:
+- All names, roles, and emails MUST be under 100 characters
+- NEVER generate fictional or repetitive content (like repeating characters)
+- If you're uncertain about information, omit it rather than guessing
+- Ensure all JSON is valid and properly formatted
+- Emails must be in a valid format (contain @ and a domain)
 
 Return the results as a valid JSON array with this structure:
 [
@@ -74,40 +132,55 @@ Make sure to return valid JSON that can be parsed.
 
   console.log('📤 Sending contact finding request to OpenAI API...');
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      temperature: 0.2,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a business contact research expert. Find real people at companies based on their websites and public information. Always return valid JSON with the requested structure.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: 4000
-    })
-  });
+  // Create an AbortController to implement a timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ OpenAI API error:', errorText);
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        temperature: 0.2,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a business contact research expert. Find real people at companies based on their websites and public information. Always return valid JSON with the requested structure. NEVER generate fictional data or repetitive patterns like "KKKKKK". All fields must be under 100 characters. If uncertain, omit information rather than guessing.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 4000
+      }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    rawContent = data.choices[0].message.content;
+    console.log('✅ OpenAI API Response received');
+    console.log('📊 Usage:', JSON.stringify(data.usage, null, 2));
+    console.log('📄 Raw ChatGPT response preview:', rawContent.substring(0, 500) + '...');
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('❌ OpenAI API request timed out after 30 seconds');
+      throw new Error('OpenAI API request timed out after 30 seconds');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-  const rawContent = data.choices[0].message.content;
-  console.log('✅ OpenAI API Response received');
-  console.log('📊 Usage:', JSON.stringify(data.usage, null, 2));
-  console.log('📄 Raw ChatGPT response preview:', rawContent.substring(0, 500) + '...');
 
   try {
     // Clean the response - remove markdown code blocks if present
@@ -121,7 +194,37 @@ Make sure to return valid JSON that can be parsed.
 
     console.log('🧹 Cleaned content preview:', cleanedContent.substring(0, 200) + '...');
 
-    const parsedData = JSON.parse(cleanedContent);
+    // Check for extremely long strings or repetitive patterns that might indicate malformed data
+    if (/(.)(\\1{50,})/.test(cleanedContent)) {
+      console.warn('⚠️ Detected repetitive pattern in response, attempting to fix...');
+      // Try to fix repetitive patterns
+      cleanedContent = cleanedContent.replace(/(.)(\\1{50,})/g, '$1');
+    }
+
+    // Try to parse the JSON, with fallback to a more lenient approach if it fails
+    let parsedData: OpenAICompanyResponse[];
+    try {
+      parsedData = JSON.parse(cleanedContent) as OpenAICompanyResponse[];
+    } catch (parseError) {
+      console.warn('⚠️ Initial JSON parsing failed, attempting recovery...');
+
+      // Try to extract just the valid part of the JSON
+      try {
+        // Find the last valid closing bracket
+        const lastBracketIndex = cleanedContent.lastIndexOf(']');
+        if (lastBracketIndex > 0) {
+          const truncatedJson = cleanedContent.substring(0, lastBracketIndex + 1);
+          parsedData = JSON.parse(truncatedJson) as OpenAICompanyResponse[];
+          console.log('✅ Recovered partial JSON data');
+        } else {
+          throw new Error('Could not find valid JSON structure');
+        }
+      } catch (recoveryError) {
+        console.error('❌ Recovery attempt failed:', recoveryError);
+        throw new Error(`Failed to parse ChatGPT response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+      }
+    }
+
     console.log('✅ Successfully parsed ChatGPT response');
 
     // Validate the structure
@@ -132,33 +235,49 @@ Make sure to return valid JSON that can be parsed.
     // Make sure we have the right company IDs
     const companiesMap = new Map(companies.map(c => [c.company_name.toLowerCase(), c]));
 
-    const validatedData = parsedData.map((item: any) => {
-      // Try to match the company by name
-      const companyKey = item.company_name.toLowerCase();
-      const company = companiesMap.get(companyKey) ||
-                      companies.find(c => item.company_id === c.id) ||
-                      companies.find(c => c.company_name.toLowerCase().includes(companyKey) ||
-                                         companyKey.includes(c.company_name.toLowerCase()));
+    const validatedData = parsedData.map((item: OpenAICompanyResponse) => {
+      try {
+        // Try to match the company by name
+        const companyKey = item.company_name?.toLowerCase() || '';
+        const company = companiesMap.get(companyKey) ||
+                        companies.find(c => item.company_id === c.id) ||
+                        companies.find(c => c.company_name.toLowerCase().includes(companyKey) ||
+                                           companyKey.includes(c.company_name.toLowerCase()));
 
-      if (!company) {
-        console.warn(`⚠️ Could not match company: ${item.company_name}`);
+        if (!company) {
+          console.warn(`⚠️ Could not match company: ${item.company_name}`);
+          return null;
+        }
+
+        // Validate and sanitize contacts
+        const validContacts = Array.isArray(item.contacts)
+          ? item.contacts
+              .filter(c => validateContact(c))
+              .map(c => ({
+                name: sanitizeString(c.name) || '',
+                role: sanitizeString(c.role),
+                email: sanitizeString(c.email)
+              }))
+          : [];
+
+        return {
+          company_name: company.company_name,
+          company_id: company.id,
+          contacts: validContacts
+        };
+      } catch (error) {
+        console.warn(`⚠️ Error processing company data: ${error instanceof Error ? error.message : String(error)}`);
         return null;
       }
-
-      return {
-        company_name: company.company_name,
-        company_id: company.id,
-        contacts: Array.isArray(item.contacts) ? item.contacts.filter((c: any) => c.name) : []
-      };
-    }).filter(Boolean);
+    }).filter((item): item is CompanyWithContacts => item !== null);
 
     console.log(`🏢 Found contacts for ${validatedData.length} companies`);
-    return validatedData as CompanyWithContacts[];
+    return validatedData;
 
-  } catch (parseError: any) {
+  } catch (parseError) {
     console.error('❌ Failed to parse ChatGPT contact response:', parseError);
     console.error('📄 Raw response that failed to parse:', rawContent);
-    throw new Error(`Failed to parse ChatGPT contact response: ${parseError.message}`);
+    throw new Error(`Failed to parse ChatGPT contact response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
   }
 }
 
@@ -198,10 +317,15 @@ export async function saveCompanyContacts(companyId: string, contacts: ContactIn
   console.log(`✅ Successfully saved ${rows.length} contacts for company ID ${companyId}`);
 }
 
+interface ProcessingResult {
+  enrichedCount: number;
+  companiesWithContactsCount: number;
+}
+
 /**
  * Process contact enrichment for a lead submission
  */
-export async function processContactEnrichment(job: { id: string; data: { lead_submission_id: string }; attempts: number; max_attempts: number }) {
+export async function processContactEnrichment(job: { id: string; data: { lead_submission_id: string }; attempts: number; max_attempts: number }): Promise<ProcessingResult> {
   const leadId = job.data.lead_submission_id;
 
   if (!leadId) {
@@ -265,8 +389,8 @@ export async function processContactEnrichment(job: { id: string; data: { lead_s
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-      } catch (error: any) {
-        console.error(`❌ Error processing batch: ${error.message}`);
+      } catch (error) {
+        console.error(`❌ Error processing batch: ${error instanceof Error ? error.message : String(error)}`);
         // Continue with next batch even if one fails
       }
     }
@@ -287,15 +411,15 @@ export async function processContactEnrichment(job: { id: string; data: { lead_s
       companiesWithContactsCount
     };
 
-  } catch (error: any) {
-    console.error(`❌ Contact enrichment failed: ${error.message}`);
+  } catch (error) {
+    console.error(`❌ Contact enrichment failed: ${error instanceof Error ? error.message : String(error)}`);
 
     // Update lead with error
     await supabaseAdmin
       .from('lead_submissions')
       .update({
         contacts_enriched: false,
-        contacts_enrichment_error: error.message
+        contacts_enrichment_error: error instanceof Error ? error.message : String(error)
       })
       .eq('id', leadId);
 

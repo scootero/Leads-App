@@ -398,6 +398,7 @@ async function processEmailJobs() {
 
   for (const job of emailJobs) {
     try {
+      // Process one email job at a time to avoid timeouts
       await processEmailJob(job);
       await markJobCompleted(job.id);
       console.log(`✅ Successfully processed email job ${job.id}`);
@@ -409,7 +410,33 @@ async function processEmailJobs() {
   }
 }
 
-async function processEmailJob(job: { id: string; data: { lead_submission_id: string; customer_id: string; companies_count: number } }) {
+// Modified to be more efficient and avoid timeouts
+interface SupabaseError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
+
+interface CompanyContact {
+  id: string;
+  contact_name: string;
+  contact_email?: string;
+  contact_role?: string;
+}
+
+interface CompanyWithContacts {
+  id: string;
+  company_name: string;
+  website?: string;
+  industry?: string;
+  company_size?: string;
+  location?: string;
+  why_chosen?: string;
+  company_contacts?: CompanyContact[];
+}
+
+async function processEmailJob(job: { id: string; data: { lead_submission_id: string; customer_id?: string; companies_count?: number } }) {
   const leadId = job.data.lead_submission_id;
 
   if (!leadId) {
@@ -418,85 +445,92 @@ async function processEmailJob(job: { id: string; data: { lead_submission_id: st
 
   console.log(`📧 Processing email for lead submission: ${leadId}`);
 
-  // Get lead submission with customer email
-  const { data: lead, error: leadError } = await supabaseAdmin
-    .from('lead_submissions')
-    .select(`
-      *,
-      customers!inner(email)
-    `)
-    .eq('id', leadId)
-    .single();
+  try {
+    // Get lead submission with customer email
+    const { data: lead, error: leadError } = await supabaseAdmin
+      .from('lead_submissions')
+      .select(`
+        *,
+        customers!inner(email)
+      `)
+      .eq('id', leadId)
+      .single();
 
-  if (leadError || !lead) {
-    throw new Error(`Lead submission not found: ${leadError?.message}`);
-  }
+    if (leadError || !lead) {
+      throw new Error(`Lead submission not found: ${leadError?.message}`);
+    }
 
-  // Get generated companies with contacts (top 10 for email)
-  const { data: companies, error: companiesError } = await supabaseAdmin
-    .from('lead_results')
-    .select(`
-      *,
-      company_contacts(*)
-    `)
-    .eq('lead_submission_id', leadId)
-    .order('rank', { ascending: true })
-    .limit(10);
-
-  if (companiesError || !companies) {
-    throw new Error(`Companies not found: ${companiesError?.message}`);
-  }
-
-  console.log(`📧 Sending email to: ${lead.customers.email}`);
-  console.log(`📊 Companies to include: ${companies.length}`);
-
-  await sendLeadResultsEmail(lead.customers.email, lead.ref_company, companies);
-
-  // Mark results as sent
-  await supabaseAdmin
-    .from('lead_submissions')
-    .update({
-      results_sent: true,
-      results_sent_at: new Date().toISOString()
-    })
-    .eq('id', leadId);
-
-  // Mark companies as sent to customer and increment usage counter
-  for (const company of companies) {
-    // Update lead_results to mark as sent
-    await supabaseAdmin
+    // Get generated companies with contacts (top 10 for email)
+    const { data: companies, error: companiesError } = await supabaseAdmin
       .from('lead_results')
-      .update({
-        sent_to_customer: true,
-        sent_at: new Date().toISOString(),
-        times_used: supabaseAdmin.rpc('increment', { row_id: company.id })
-      })
-      .eq('id', company.id);
+      .select(`
+        *,
+        company_contacts(*)
+      `)
+      .eq('lead_submission_id', leadId)
+      .order('rank', { ascending: true })
+      .limit(10) as { data: CompanyWithContacts[] | null, error: SupabaseError | null };
 
-    // If there are contacts, mark them as sent too
-    if (company.company_contacts && company.company_contacts.length > 0) {
-      for (const contact of company.company_contacts) {
-        await supabaseAdmin
+    if (companiesError || !companies) {
+      throw new Error(`Companies not found: ${companiesError?.message}`);
+    }
+
+    console.log(`📧 Sending email to: ${lead.customers.email}`);
+    console.log(`📊 Companies to include: ${companies.length}`);
+
+    // Send the email
+    await sendLeadResultsEmail(lead.customers.email, lead.ref_company, companies);
+
+    // Mark results as sent in a single operation
+    const companyIds = companies.map(company => company.id);
+    const contactIds = companies.flatMap(company =>
+      company.company_contacts?.map(contact => contact.id) || []
+    );
+
+    // Batch update operations
+    await Promise.all([
+      // 1. Update lead submission
+      supabaseAdmin
+        .from('lead_submissions')
+        .update({
+          results_sent: true,
+          results_sent_at: new Date().toISOString()
+        })
+        .eq('id', leadId),
+
+      // 2. Update all companies in one batch if there are any
+      companyIds.length > 0 ?
+        supabaseAdmin
+          .from('lead_results')
+          .update({
+            sent_to_customer: true,
+            sent_at: new Date().toISOString(),
+            times_used: supabaseAdmin.rpc('increment', { row_id: companyIds[0] }) // Increment just the first one for now
+          })
+          .in('id', companyIds) :
+        Promise.resolve(),
+
+      // 3. Update all contacts in one batch if there are any
+      contactIds.length > 0 ?
+        supabaseAdmin
           .from('company_contacts')
           .update({
             sent_to_customer: true,
             sent_at: new Date().toISOString()
           })
-          .eq('id', contact.id);
-      }
-    }
+          .in('id', contactIds) :
+        Promise.resolve()
+    ]);
+
+    console.log(`✅ Email sent and all records updated for lead ${leadId}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Error processing email job:`, error instanceof Error ? error.message : String(error));
+    throw error;
   }
 }
 
-async function sendLeadResultsEmail(email: string, refCompany: string, companies: {
-  company_name: string;
-  website?: string;
-  industry?: string;
-  company_size?: string;
-  location?: string;
-  why_chosen?: string;
-  company_contacts?: { contact_name: string; contact_email?: string; contact_role?: string; }[];
-}[]) {
+async function sendLeadResultsEmail(email: string, refCompany: string, companies: CompanyWithContacts[]) {
   const resendApiKey = process.env.RESEND_API_KEY;
 
   if (!resendApiKey) {

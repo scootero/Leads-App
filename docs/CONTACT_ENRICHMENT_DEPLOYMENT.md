@@ -73,6 +73,31 @@ If you encounter any issues:
    - Missing columns or tables
    - RLS policies not properly configured
 
+## Safeguards and Error Handling
+
+The contact enrichment feature includes several safeguards to ensure reliability:
+
+1. **Input Validation**:
+   - ChatGPT is instructed to limit field lengths to 100 characters
+   - Explicit instructions to avoid fictional or repetitive data
+   - Guidance to omit information rather than guessing
+
+2. **Response Validation**:
+   - Validation of contact data structure and field lengths
+   - Detection and removal of repetitive patterns (like "KKKKKK...")
+   - Sanitization of all strings to prevent excessively long values
+
+3. **Error Handling**:
+   - JSON parsing with recovery mechanisms for malformed responses
+   - Batch processing with continuation despite individual failures
+   - Detailed error logging for troubleshooting
+
+4. **Timeouts**:
+   - 30-second timeout for OpenAI API calls to prevent hanging
+   - Exponential backoff for failed jobs
+
+These safeguards help ensure that even if ChatGPT returns unusual or malformed data, the system will handle it gracefully without crashing.
+
 ## Schema Comparison
 
 Here's a comparison of your existing company_contacts schema and our enhancements:
