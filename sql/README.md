@@ -1,67 +1,47 @@
-# SQL Files Organization
+# SQL Directory Structure
 
-## 📁 **sql/setup/** - Database Setup Files
-**Use these to set up your database from scratch:**
+This directory contains all SQL scripts for the LeadSpark application.
 
-- `create-queue-system.sql` - **MAIN SETUP FILE** - Creates the complete system
-- `supabase-schema.sql` - Original schema with triggers
-- `supabase-schema-fixed.sql` - Fixed version of the schema
-- `step-by-step-schema.sql` - Step-by-step setup instructions
-- `continue-schema.sql` - Continue setup after initial tables
-- `minimal-schema.sql` - Minimal schema without triggers
-- `add-triggers.sql` - Add triggers to existing tables
-- `add-triggers-only.sql` - Add only triggers (no test data)
-- `create-simple-triggers.sql` - Simple trigger setup
-- `fix-triggers-pgnet.sql` - Fix triggers for pg_cron
-- `fix-rls-policies.sql` - Fix Row Level Security policies
-- `fix-schema.sql` - Fix schema issues
+## Directory Structure
 
-## 📁 **sql/testing/** - Testing Files
-**Use these to test your system:**
+- **migrations/**: Contains all schema changes that have been applied to the database
+  - `add-contacts-found-fields.sql`: Adds contact tracking fields to lead_results table
+  - `enhance-company-contacts-simple.sql`: Enhances the company_contacts table structure
+  - `enhance-lead-tables.sql`: Adds fields to lead_submissions and lead_results tables
+  - `lead-automation-schema.sql`: Initial schema for lead automation
+  - `queue-improvements-final.sql`: Queue system improvements
+  - `supabase-schema.sql`: Base Supabase schema
+  - `verify-contact-enrichment.sql`: Script to verify contact enrichment setup
 
-- `test-all-form-types.sql` - Test all three form types
-- `test-api-forms.js` - JavaScript test for API endpoints
-- `test-edge-functions-manual.sql` - Manual Edge Function testing
-- `test-edge-functions.js` - JavaScript Edge Function testing
-- `test-email-manually.sql` - Manual email testing
-- `test-fresh-email.sql` - Test with fresh email addresses
-- `test-manual-queue.sql` - Manual queue testing
-- `test-newsletter-table.sql` - Newsletter table testing
-- `test-pgnet.sql` - pg_cron testing
-- `test-rls-fix.sql` - RLS policy testing
-- `test-system-clean.sql` - Clean system testing
-- `test-system-unique.sql` - Unique email testing
-- `simple-debug.sql` - Simple debugging queries
-- `debug-email-issue.sql` - Email debugging
-- `delete-test-entries.sql` - Clean up test data
+- **functions/**: Contains standalone SQL functions
+  - `increment-function-standalone.sql`: Function to increment a counter field
 
-## 📁 **sql/debug/** - Debugging Files
-**Use these to troubleshoot issues:**
+- **testing/**: Contains scripts for testing and debugging
+  - Various test scripts for different features
 
-- `check-database-state.sql` - Check current database state
-- `check-existing-schema.sql` - Check existing schema
-- `check-trigger-logs.sql` - Check trigger logs
-- `diagnose-issue.sql` - Diagnose common issues
-- `debug-tables.sql` - Debug table issues
+- **archive/**: Contains old scripts that are no longer used but kept for reference
+  - Legacy scripts
 
-## 📁 **sql/archive/** - Archived Files
-**Old files that are no longer needed:**
+- **debug/**: Contains scripts for debugging database issues
+  - Diagnostic scripts
 
-- `work-with-existing-schema.sql` - Work with existing schema
-- `new-schema.sql` - New schema approach
-- `create-lead-submissions-table.sql` - Create lead submissions table
-- `fix-lead-submissions-table.sql` - Fix lead submissions table
-- `fix-supabase-policies.sql` - Fix Supabase policies
+## Usage
 
-## 🚀 **Quick Start:**
+To run a script in the Supabase SQL editor:
 
-1. **For new setup**: Use `sql/setup/create-queue-system.sql`
-2. **For testing**: Use `sql/testing/test-all-form-types.sql`
-3. **For debugging**: Use `sql/debug/simple-debug.sql`
+```sql
+\i /path/to/script.sql
+```
 
-## 📋 **Most Important Files:**
+For example:
 
-- ✅ `sql/setup/create-queue-system.sql` - Complete system setup
-- ✅ `sql/testing/test-all-form-types.sql` - Test all forms
-- ✅ `sql/testing/delete-test-entries.sql` - Clean up test data
-- ✅ `sql/debug/simple-debug.sql` - Quick debugging
+```sql
+\i /sql/migrations/add-contacts-found-fields.sql
+```
+
+## Best Practices
+
+1. Always back up your database before running migration scripts
+2. Test scripts in a development environment before applying to production
+3. Keep scripts idempotent (can be run multiple times without side effects)
+4. Document all schema changes in the script comments

@@ -531,8 +531,8 @@ export default function LeadAppClassicToggle() {
           {formSubmitted ? (
             <div className="text-center py-8">
               <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-100 grid place-items-center mb-3">✅</div>
-              <div className="text-lg font-semibold">Got it — we&apos;ll send your 10 similar companies + contacts by email.</div>
-              <p className="text-sm text-slate-600 mt-1">We&apos;ll reply from team@yourdomain.com. Check spam just in case.</p>
+              <div className="text-lg font-semibold">Got it — we are processing your leads! We&apos;ll send your customlist of 10 company leads + contacts by email soon.</div>
+              <p className="text-sm text-slate-600 mt-1">Check spam just in case.</p>
             </div>
           ) : (
             <form

@@ -21,24 +21,24 @@ A complete lead generation system with automated email workflows.
 │   ├── supabase.ts        # Supabase client
 │   └── contact-enrichment.ts # Contact finding with AI
 ├── sql/                    # Database files (organized)
-│   ├── setup/             # Database setup scripts
-│   │   ├── contact-enrichment-schema.sql # Contact tables
-│   │   └── increment-function.sql        # Usage tracking
-│   ├── testing/           # Testing scripts
-│   ├── debug/             # Debugging scripts
-│   └── archive/           # Old/unused files
+│   ├── migrations/         # Database schema migrations
+│   ├── functions/          # Standalone SQL functions
+│   ├── testing/            # Testing scripts
+│   ├── debug/              # Debugging scripts
+│   └── archive/            # Old/unused files
 ├── supabase/              # Supabase configuration
 │   └── functions/         # Edge Functions
 ├── docs/                  # Documentation
-│   └── CONTACT_ENRICHMENT.md # Contact feature docs
-└── EMAIL_SETUP_GUIDE.md   # Email setup instructions
+│   ├── setup/             # Setup guides
+│   ├── features/          # Feature documentation
+│   └── deployment/        # Deployment guides
 ```
 
 ## 🛠️ **Setup**
 
-1. **Database Setup**: Run `sql/setup/create-queue-system.sql`
-2. **Contact Enrichment**: Run `sql/setup/contact-enrichment-schema.sql`
-3. **Email Setup**: Follow `EMAIL_SETUP_GUIDE.md`
+1. **Database Setup**: Run `sql/migrations/supabase-schema.sql`
+2. **Contact Enrichment**: Run `sql/migrations/enhance-company-contacts-simple.sql`
+3. **Email Setup**: Follow `docs/setup/EMAIL_SETUP_GUIDE.md`
 4. **Environment Variables**: Set up Supabase, OpenAI, and Resend keys
 
 ## 🧪 **Testing**
@@ -66,9 +66,9 @@ A complete lead generation system with automated email workflows.
 
 ## 📋 **Quick Start**
 
-1. Set up database with `sql/setup/create-queue-system.sql`
-2. Set up contact enrichment with `sql/setup/contact-enrichment-schema.sql`
-3. Configure email with `EMAIL_SETUP_GUIDE.md`
+1. Set up database with `sql/migrations/supabase-schema.sql`
+2. Set up contact enrichment with `sql/migrations/enhance-company-contacts-simple.sql`
+3. Configure email with `docs/setup/EMAIL_SETUP_GUIDE.md`
 4. Set OpenAI API key in environment variables
 5. Test with `sql/testing/test-all-form-types.sql`
 6. Deploy and enjoy! 🎉
